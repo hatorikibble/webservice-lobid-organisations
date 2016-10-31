@@ -8,10 +8,10 @@ use Encode;
 use Log::Any::Adapter ('Stderr');
 
 BEGIN {
-use_ok( 'WWW::Lobid::Organisation' );
+use_ok( 'WebService::Lobid::Organisation' );
 }
 
-my $O = WWW::Lobid::Organisation->new(isil=>'DE-380');
+my $O = WebService::Lobid::Organisation->new(isil=>'DE-380');
 
 is($O->api_url,'https://lobid.org/', "API-URL found");
 is($O->name,'Stadtbibliothek Köln',"Name found");
