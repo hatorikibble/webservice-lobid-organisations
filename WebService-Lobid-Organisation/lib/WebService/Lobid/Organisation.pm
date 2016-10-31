@@ -1,14 +1,14 @@
-package WWW::Lobid::Organisation;
+package WebService::Lobid::Organisation;
 
 # ABSTRACT: interface to the lobid-Organisations API
 
 =head1 NAME
 
-WWW::Lobid::Organisation - interface to the lobid-Organisations API
+WebService::Lobid::Organisation - interface to the lobid-Organisations API
 
 =head1 SYNOPSIS
 
-my $Library = WWW::Lobid::Organisation->new(isil=> 'DE-380');
+my $Library = WebService::Lobid::Organisation->new(isil=> 'DE-380');
 
 printf("This Library is called '%s' and its homepage is at '%s'",
     $Library->name, $Library->url);
@@ -37,7 +37,7 @@ use LWP::UserAgent;
 use Moo;
 use Try::Tiny;
 
-extends 'WWW::Lobid';
+extends 'WebService::Lobid';
 
 has isil => ( is => 'rw', predicate=>1, required => 1);
 has name => (is => 'rw', predicate=>1);

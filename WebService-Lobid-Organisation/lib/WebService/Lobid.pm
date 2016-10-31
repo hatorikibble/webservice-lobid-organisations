@@ -1,4 +1,4 @@
-package WWW::Lobid;
+package WebService::Lobid;
 
 use strict;
 use warnings;
