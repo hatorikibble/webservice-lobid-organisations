@@ -96,7 +96,7 @@ sub BUILD{
 	$data{$g->{'@id'}} = $g;
     }
     if (exists($data{$uri})){
-       	print $data{$uri}->{'@id'};
+     
     	$self->name($data{$uri}->{name}) if ($data{$uri}->{name});
     	$self->url($data{$uri}->{url}) if ($data{$uri}->{url});
     	$self->wikipedia($data{$uri}->{wikipedia}) if ($data{$uri}->{wikipedia});
@@ -115,14 +115,12 @@ sub BUILD{
     	    $self->email($email);
     	}
 	if ($data{$uri}->{location}){
-	    #$self->lat($data{$data{$uri}->{location}->{'@id'}}->{lat});
-	    print $uri}->{location}->{'@id'};
+	    $self->lat($data{$data{$uri}->{location}}->{lat});
+	    $self->long($data{$data{$uri}->{location}}->{long});
 	}
-    	#print ref($self->email);
+
     }
-    use Data::Dumper;
-    print Dumper(%data);
-    print $self->lat();
+
     
 }
 
