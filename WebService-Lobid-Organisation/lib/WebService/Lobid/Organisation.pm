@@ -10,8 +10,9 @@ WebService::Lobid::Organisation - interface to the lobid-Organisations API
 
 my $Library = WebService::Lobid::Organisation->new(isil=> 'DE-380');
 
-printf("This Library is called '%s' and its homepage is at '%s'",
-    $Library->name, $Library->url);
+printf("This Library is called '%s', its homepage is at '%s' 
+        and it can be found at %f/%f",
+    $Library->name, $Library->url, $Library->lat, $Library->long);
 
 if ($Library->has_wikipedia){
  printf("%s has its own wikipedia entry: %s",
@@ -31,9 +32,9 @@ use warnings;
 use Data::Dumper;
 
 use Encode;
+use HTTP::Tiny;
 use JSON;
 use Log::Any;
-use LWP::UserAgent;
 use Moo;
 use Try::Tiny;
 
@@ -58,7 +59,6 @@ has log => (
 sub BUILD{
     my $self = shift;
     
-    my $ua = LWP::UserAgent->new();
     my $query_string = undef;
     my $response = undef;
     my $json_result  = undef;
@@ -66,22 +66,22 @@ sub BUILD{
     my %data = ();
     my $email = undef;
     my $uri = sprintf( "%s%s/%s",
-			      $self->api_url, "organisation", $self->isil);
+		       $self->api_url, "organisation", $self->isil);
     
-     $query_string = sprintf( "%s%s?id=%s&format=full",
-			      $self->api_url, "organisation", $self->isil);
+    $query_string = sprintf( "%s%s?id=%s&format=full",
+			     $self->api_url, "organisation", $self->isil);
 
     $self->log->infof("URL: %s", $query_string);
-     $response = $ua->get($query_string);
+    $response = HTTP::Tiny->new->get($query_string);
 
-    if ($response->is_success) {
-      $json_result = $response->decoded_content;  # or whatever
+    if ($response->{success}) {
+      $json_result = $response->{content};
     }
     else {
       $self->log->errorf("Problem accessing the API: %s!",
-			 $response->status_line);
+			 $response->{status});
       $result_ref->{success} = 0;
-      $result_ref->{error_msg} = $response->status_line;
+      $result_ref->{error_msg} = $response->{status};
       return $result_ref;
     }
 
