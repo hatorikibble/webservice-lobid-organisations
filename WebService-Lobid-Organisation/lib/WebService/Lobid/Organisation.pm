@@ -8,21 +8,21 @@ WebService::Lobid::Organisation - interface to the lobid-Organisations API
 
 =head1 SYNOPSIS
 
-my $Library = WebService::Lobid::Organisation->new(isil=> 'DE-380');
-
-printf("This Library is called '%s', its homepage is at '%s' 
-        and it can be found at %f/%f",
-    $Library->name, $Library->url, $Library->lat, $Library->long);
-
-if ($Library->has_wikipedia){
- printf("%s has its own wikipedia entry: %s",
-    $Library->name, $Library->wikipedia);
-}
-
-if ($Library->has_multiple_emails){
- print $Library->email->[0];
-}else{
- print $Library->email;
+ my $Library = WebService::Lobid::Organisation->new(isil=> 'DE-380');
+ 
+ printf("This Library is called '%s', its homepage is at '%s' 
+         and it can be found at %f/%f",
+     $Library->name, $Library->url, $Library->lat, $Library->long);
+ 
+ if ($Library->has_wikipedia){
+  printf("%s has its own wikipedia entry: %s",
+     $Library->name, $Library->wikipedia);
+ } 
+ 
+ if ($Library->has_multiple_emails){
+  print $Library->email->[0];
+ }else{
+  print $Library->email;
 
 =head1 METHODS
 
