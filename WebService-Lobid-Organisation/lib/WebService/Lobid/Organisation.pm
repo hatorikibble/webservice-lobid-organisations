@@ -121,9 +121,6 @@ Peter Mayr 2016
 use strict;
 use warnings;
 
-use Data::Dumper;
-
-
 use HTTP::Tiny;
 use JSON;
 use Log::Any;
