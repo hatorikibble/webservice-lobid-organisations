@@ -14,6 +14,8 @@ WebService::Lobid::Organisation - interface to the lobid-Organisations API
          and it can be found at %f/%f",
      $Library->name, $Library->url, $Library->lat, $Library->long);
  
+ print $Library->url->scheme; 
+
  if ($Library->has_wikipedia){
   printf("%s has its own wikipedia entry: %s",
      $Library->name, $Library->wikipedia);
@@ -21,8 +23,11 @@ WebService::Lobid::Organisation - interface to the lobid-Organisations API
  
  if ($Library->has_multiple_emails){
   print $Library->email->[0];
+  print $Library->email->[0]->user;
  }else{
   print $Library->email;
+  print $Library->email->user;
+ }
 
 =head1 METHODS
 
@@ -54,11 +59,18 @@ Has the predicate function I<has_name>.
 
 =item * B<url>
 
-Has the predicate function I<has_url>
+The URL of the institituion as an L<URI> object. Has the predicate 
+function I<has_url>
+
+=item * B<provides>
+
+The URL of a resource the institituion provides as an L<URI> object. 
+Typically the OPAC. Has the predicate function I<has_url>
 
 =item * B<wikipedia>
 
-Wikpedia entry about the institution. Has the predicate function I<has_wikipedia>
+Wikpedia entry about the institution as an L<URI> object. Has the predicate 
+function I<has_wikipedia>
 
 =item * B<countryName>
 
@@ -78,7 +90,7 @@ Has the predicate function I<has_streedAddress>
 
 =item * B<email>
 
-Has the predicate function I<has_email>. The email address for the instition including a I<mailto:> prefix. A scalar if there ist just one email address, an array reference if there are more than one adresses (in this case C<has_multiple_emails> is set to I<1>
+Has the predicate function I<has_email>. The email address for the instition including as an L<Email::Address> object. A scalar if there ist just one email address, an array reference if there are more than one adresses (in this case C<has_multiple_emails> is set to I<1>
  
 =item * B<has_multiple_emails>
 
@@ -121,17 +133,20 @@ Peter Mayr 2016
 use strict;
 use warnings;
 
+use Email::Address;
 use HTTP::Tiny;
 use JSON;
 use Log::Any;
 use Moo;
 use Try::Tiny;
+use URI;
 
 extends 'WebService::Lobid';
 
 has isil => ( is => 'rw', predicate => 1, required => 1 );
 has name => ( is => 'rw', predicate => 1 );
 has url  => ( is => 'rw', predicate => 1 );
+has provides  => ( is => 'rw', predicate => 1 );
 has wikipedia           => ( is => 'rw', predicate => 1 );
 has countryName         => ( is => 'rw', predicate => 1 );
 has locality            => ( is => 'rw', predicate => 1 );
@@ -200,8 +215,9 @@ sub BUILD {
     if ( exists( $data{$uri} ) ) {
         $self->log->debugf("Data %s",$data{$uri}); 
         $self->name( $data{$uri}->{name} ) if ( $data{$uri}->{name} );
-        $self->url( $data{$uri}->{url} )   if ( $data{$uri}->{url} );
-        $self->wikipedia( $data{$uri}->{wikipedia} )
+        $self->url( URI->new($data{$uri}->{url}) )   if ( $data{$uri}->{url} );
+	$self->provides( URI->new($data{$uri}->{provides}) )   if ( $data{$uri}->{provides} );
+        $self->wikipedia( URI->new($data{$uri}->{wikipedia}) )
           if ( $data{$uri}->{wikipedia} );
         if ( $data{$uri}->{email} ) {
             $email = $data{$uri}->{email};
@@ -209,12 +225,13 @@ sub BUILD {
                 $self->has_multiple_emails(1);
                 for ( my $i = 0 ; $i < scalar( @{$email} ) ; $i++ ) {
                     $email->[$i] =~ s/^mailto://;
+		    $email->[$i] = Email::Address->new(undef,$email->[$i]);
                 }
             }
             else {
 
                 $email =~ s/^mailto://;
-
+                $email = Email::Address->new(undef,$email); 
             }
             $self->email($email);
         }
