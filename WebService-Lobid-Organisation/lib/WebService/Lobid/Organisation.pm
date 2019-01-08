@@ -56,17 +56,13 @@ Has the predicate function I<has_name>.
 
 Has the predicate function I<has_url>
 
-=item * B<wikipedia>
+=item * B<addressCountry>
 
-Wikpedia entry about the institution. Has the predicate function I<has_wikipedia>
+Has the predicate function I<has_addressCountry>
 
-=item * B<countryName>
+=item * B<addressLocality>
 
-Has the predicate function I<has_countryName>
-
-=item * B<locality>
-
-The city or town where institution resides. Has the predicate function I<has_locality>
+The city or town where institution resides. Has the predicate function I<has_addressLocality>
 
 =item * B<postalCode>
 
@@ -84,9 +80,9 @@ Has the predicate function I<has_email>. The email address for the instition inc
 
 set to I<1> if there is more than one address in C<email>
 
-=item * B<long>
+=item * B<lon>
 
-The longitude of the place. Has the predicate function I<has_long>.
+The longitude of the place. Has the predicate function I<has_lon>.
 
 =item * B<lat>
 
@@ -132,14 +128,13 @@ extends 'WebService::Lobid';
 has isil => ( is => 'rw', predicate => 1, required => 1 );
 has name => ( is => 'rw', predicate => 1 );
 has url  => ( is => 'rw', predicate => 1 );
-has wikipedia           => ( is => 'rw', predicate => 1 );
-has countryName         => ( is => 'rw', predicate => 1 );
-has locality            => ( is => 'rw', predicate => 1 );
+has addressCountry         => ( is => 'rw', predicate => 1 );
+has addressLocality            => ( is => 'rw', predicate => 1 );
 has postalCode          => ( is => 'rw', predicate => 1 );
 has streetAddress       => ( is => 'rw', predicate => 1 );
 has email               => ( is => 'rw', predicate => 1 );
 has has_multiple_emails => ( is => 'rw', default   => 0 );
-has long                => ( is => 'rw', predicate => 1 );
+has lon                 => ( is => 'rw', predicate => 1 );
 has lat                 => ( is => 'rw', predicate => 1 );
 has found               => ( is => 'rw', default   => 'false' );
 
@@ -160,8 +155,8 @@ sub BUILD {
     my $email         = undef;
     my $uri = sprintf( "%s%s/%s", $self->api_url, "organisation", $self->isil );
 
-    $query_string = sprintf( "%s%s?id=%s&format=full",
-        $self->api_url, "organisation", $self->isil );
+    $query_string = sprintf( "%s%s/%s.json",
+                             $self->api_url, "organisations", $self->isil );
 
     $self->log->infof( "URL: %s", $query_string );
     $response = HTTP::Tiny->new->get($query_string);
@@ -170,11 +165,20 @@ sub BUILD {
         $json_result = $response->{content};
     }
     else {
-        $self->log->errorf( "Problem accessing the API: %s!",
-            $response->{status} );
-        $result_ref->{success}   = 0;
-        $result_ref->{error_msg} = $response->{status};
-        return $result_ref;
+
+        if ( $response->{status} eq '404' ) {
+            $self->log->warnf( "ISIL %s not found!", $self->isil );
+            $self->found("false");
+            return;
+        }
+        else {
+            $self->log->errorf( "Problem accessing the API: %s!",
+                                $response->{status} );
+            $result_ref->{success}   = 0;
+            $result_ref->{error_msg} = $response->{status};
+
+            return $result_ref;
+        }
     }
 
     $self->log->debugf( "Got JSON Result: %s", $json_result );
@@ -184,60 +188,53 @@ sub BUILD {
     }
     catch {
         $self->log->errorf( "Decoding of response '%s' failed: %s",
-            $json_result, $_ );
+                            $json_result, $_ );
     };
 
-    if ( $result_ref->[0]->{'http://sindice.com/vocab/search#totalResults'} ) {
-        $no_of_results =
-          $result_ref->[0]->{'http://sindice.com/vocab/search#totalResults'};
-        $self->log->infof( "Got %d results", $no_of_results );
-        $self->found("true") if ( $no_of_results == 1 );
+    if ( $result_ref->{isil} eq $self->isil ) {
+        $self->log->infof( "Got result for ISIL %s", $self->isil );
+        $self->found("true");
     }
 
-    foreach my $g ( @{ $result_ref->[1]->{'@graph'} } ) {
-        $data{ $g->{'@id'} } = $g;
+    if ( $result_ref->{email} ) {
+        $email = $result_ref->{email};
+        if ( ref($email) eq 'ARRAY' ) {    # multiple E-Mail Adresses
+            $self->has_multiple_emails(1);
+            for ( my $i = 0; $i < scalar( @{$email} ); $i++ ) {
+                $email->[$i] =~ s/^mailto://;
+            }
+        }
+        else {
+
+            $email =~ s/^mailto://;
+
+        }
+        $self->email($email);
     }
-    if ( exists( $data{$uri} ) ) {
-        $self->log->debugf("Data %s",$data{$uri}); 
-        $self->name( $data{$uri}->{name} ) if ( $data{$uri}->{name} );
-        $self->url( $data{$uri}->{url} )   if ( $data{$uri}->{url} );
-        $self->wikipedia( $data{$uri}->{wikipedia} )
-          if ( $data{$uri}->{wikipedia} );
-        if ( $data{$uri}->{email} ) {
-            $email = $data{$uri}->{email};
-            if ( ref($email) eq 'ARRAY' ) {    # multiple E-Mail Adresses
-                $self->has_multiple_emails(1);
-                for ( my $i = 0 ; $i < scalar( @{$email} ) ; $i++ ) {
-                    $email->[$i] =~ s/^mailto://;
-                }
-            }
-            else {
 
-                $email =~ s/^mailto://;
+    $self->name( $result_ref->{name} ) if ( $result_ref->{name} );
+    $self->url( $result_ref->{url} )   if ( $result_ref->{url} );
 
-            }
-            $self->email($email);
+    if (    ( defined( $result_ref->{location} ) )
+         && ( ref( $result_ref->{location} ) eq 'ARRAY' ) )
+    {
+        if ( $result_ref->{location}->[0]->{geo} ) {
+            $self->lat( $result_ref->{location}->[0]->{geo}->{lat} );
+            $self->lon( $result_ref->{location}->[0]->{geo}->{lon} );
         }
-        if ( $data{$uri}->{location} ) {
-            $self->lat( $data{ $data{$uri}->{location} }->{lat} );
-            $self->long( $data{ $data{$uri}->{location} }->{long} );
-        }
-        if ( $data{$uri}->{address} ) {
-
-            $self->countryName( $data{ $data{$uri}->{address} }->{countryName} )
-              if ( $data{ $data{$uri}->{address} }->{countryName} );
-            $self->locality( $data{ $data{$uri}->{address} }->{locality} )
-              if ( $data{ $data{$uri}->{address} }->{locality} );
-            $self->postalCode( $data{ $data{$uri}->{address} }->{postalCode} )
-              if ( $data{ $data{$uri}->{address} }->{postalCode} );
+        if ( $result_ref->{location}->[0]->{address} ) {
+            $self->addressCountry(
+                    $result_ref->{location}->[0]->{address}->{addressCountry} );
+            $self->addressLocality(
+                   $result_ref->{location}->[0]->{address}->{addressLocality} );
+            $self->postalCode(
+                        $result_ref->{location}->[0]->{address}->{postalCode} );
             $self->streetAddress(
-                $data{ $data{$uri}->{address} }->{streetAddress} )
-              if ( $data{ $data{$uri}->{address} }->{streetAddress} );
+                     $result_ref->{location}->[0]->{address}->{streetAddress} );
 
         }
-
     }
 
-}
+} ## end sub BUILD
 
 1;

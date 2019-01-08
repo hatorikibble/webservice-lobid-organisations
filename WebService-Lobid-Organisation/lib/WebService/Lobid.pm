@@ -5,6 +5,6 @@ use warnings;
 
 use Moo;
 
-has api_url => ( is=> 'ro', default=> 'http://lobid.org/');
+has api_url => ( is=> 'ro', default=> 'https://lobid.org/');
 
 1;
