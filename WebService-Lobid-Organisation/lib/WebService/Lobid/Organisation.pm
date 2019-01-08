@@ -56,6 +56,10 @@ Has the predicate function I<has_name>.
 
 Has the predicate function I<has_url>
 
+=item * B<provides>
+
+Service URL, normally the OPAC, Has the predicate function I<has_provides>
+
 =item * B<addressCountry>
 
 Has the predicate function I<has_addressCountry>
@@ -128,6 +132,7 @@ extends 'WebService::Lobid';
 has isil => ( is => 'rw', predicate => 1, required => 1 );
 has name => ( is => 'rw', predicate => 1 );
 has url  => ( is => 'rw', predicate => 1 );
+has provides  => ( is => 'rw', predicate => 1 );
 has addressCountry         => ( is => 'rw', predicate => 1 );
 has addressLocality            => ( is => 'rw', predicate => 1 );
 has postalCode          => ( is => 'rw', predicate => 1 );
@@ -214,6 +219,7 @@ sub BUILD {
 
     $self->name( $result_ref->{name} ) if ( $result_ref->{name} );
     $self->url( $result_ref->{url} )   if ( $result_ref->{url} );
+    $self->provides( $result_ref->{provides} )   if ( $result_ref->{provides} );
 
     if (    ( defined( $result_ref->{location} ) )
          && ( ref( $result_ref->{location} ) eq 'ARRAY' ) )

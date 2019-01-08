@@ -1,0 +1,41 @@
+Changelog for WebService-Lobid-Organisation
+
+0.0041 2019-01-09
+ - new attribute "provides"
+
+0.004 2019-01-09
+ -  new lobid.org API, use https, new format and names
+    (lon, addressCountry, addressLocality)
+    no more Wikipedia Entry in API result (Peter Mayr)
+
+0.001 2016-11-16T12:24:01
+ - nue Plugin InstallGuide, remove TravisYML (Peter Mayr)
+ - aktuelles dist::zill installieren (Peter Mayr)
+ - added ChangelogFromGit::CPAN::Changes (Peter Mayr)
+ - Update README.pod (Peter Mayr)
+ - updated licence information (Peter Mayr)
+ - README.pod instead of README.md (Peter Mayr)
+ - more perldoc (Peter Mayr)
+ - get Address, set flag 'found' true|false, added test (Peter Mayr)
+ - Update README.md (Peter Mayr)
+ - ReadmeFromPod raus wegen Path::Class Abhängigkeit (Peter Mayr)
+ - added main module (Peter Mayr)
+ - added test prereq (Peter Mayr)
+ - cd (Peter Mayr)
+ - trigger travis (Peter Mayr)
+ - Travis config (Peter Mayr)
+ - HTTP::Tiny verwenden (Peter Mayr)
+ - no https (Peter Mayr)
+ - typo in README (Peter Mayr)
+ - parse latitude/longitude (Peter Mayr)
+ - rename Module (Peter Mayr)
+ - rename (Peter Mayr)
+ - rename according to CPAN conventions (Peter Mayr)
+ - add tests (Peter Mayr)
+ - Parse JSON Response (Peter Mayr)
+ - use http because, in order to use this url for the construction of the
+   identifier (Peter Mayr)
+ - Prereqs (Peter Mayr)
+ - initial setup (Peter Mayr)
+ - Backupdateien (Peter Mayr)
+ - Initial commit (Peter Mayr)
