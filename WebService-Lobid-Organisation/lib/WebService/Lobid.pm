@@ -21,7 +21,7 @@ sub BUILD {
     else {
         $api_url =~ s/https/http/;
         $self->api_url($api_url);
-        $self->use_ssl("true");
+        $self->use_ssl("false");
     }
 
     $response = HTTP::Tiny->new->get( $self->api_url );
