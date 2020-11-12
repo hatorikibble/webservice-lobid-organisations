@@ -1,5 +1,7 @@
 package WebService::Lobid::Organisation;
 
+our $VERSION = 0.005;
+
 # ABSTRACT: interface to the lobid-Organisations API
 
 =for html <a href="https://travis-ci.org/hatorikibble/webservice-lobid-organisations"><img src="https://travis-ci.org/hatorikibble/webservice-lobid-organisations.svg?branch=master"></a>
@@ -11,20 +13,26 @@ WebService::Lobid::Organisation - interface to the lobid-Organisations API
 =head1 SYNOPSIS
 
  my $Library = WebService::Lobid::Organisation->new(isil=> 'DE-380');
- 
- printf("This Library is called '%s', its homepage is at '%s' 
-         and it can be found at %f/%f",
-     $Library->name, $Library->url, $Library->lat, $Library->long);
- 
- if ($Library->has_wikipedia){
-  printf("%s has its own wikipedia entry: %s",
-     $Library->name, $Library->wikipedia);
- } 
- 
- if ($Library->has_multiple_emails){
-  print $Library->email->[0];
+
+ if ($Library->status eq 'OK'){
+  printf("This Library is called '%s', its homepage is at '%s'
+          and it can be found at %f/%f",
+          $Library->name, $Library->url, $Library->lat, $Library->long
+          );
+
+  if ($Library->has_wikipedia){
+    printf("%s has its own wikipedia entry: %s",
+      $Library->name, $Library->wikipedia);
+    }
+
+  if ($Library->has_multiple_emails){
+    print $Library->email->[0];
+  }else{
+    print $Library->email;
+  }
  }else{
-  print $Library->email;
+    print $Library->error;
+ }
 
 =head1 METHODS
 
@@ -32,7 +40,11 @@ WebService::Lobid::Organisation - interface to the lobid-Organisations API
 
 =item new(isil=>$isil)
 
-tries to fetch data for the organisation identified by the ISIL C<$isil>. If an entry is found then the attribute C<found> is set to I<true> 
+tries to fetch data for the organisation identified by the ISIL C<$isil>.
+If an entry is found then the attribute C<found> is set to I<true>
+
+If an error occurs, the attribute C<status> is set to I<Error> with the error
+message in C<$self->error>. Otherwise C<status> is I<OK>.
 
 =back
 
@@ -42,17 +54,24 @@ currently the following attributes are supported
 
 =over 4
 
-=item * B<api_url> 
+=item * B<api_url>
 
 inherited from L<WebService::Lobid>, default is I<https://lobid.org/>
 
 =item * B<api_status>
 
-inherited from L<WebService::Lobid>, I<ok> if C<api_url> reachable, otherwise C<error>
+inherited from L<WebService::Lobid>, I<OK> if C<api_url> reachable,
+otherwise C<Error>
+
+=item * B<api_timeout>
+
+inherited from L<WebService::Lobid>, default ist I<3> seconds
+
 
 =item * B<use_ssl>
 
-inherited from L<WebService::Lobid>, I<true> if L<HTTP::Tiny> can use SSL, otherwise C<false>
+inherited from L<WebService::Lobid>, I<true> if L<HTTP::Tiny> can use SSL,
+otherwise C<false>
 
 =item * B<found> (true|false)
 
@@ -93,7 +112,7 @@ Has the predicate function I<has_streedAddress>
 =item * B<email>
 
 Has the predicate function I<has_email>. The email address for the instition including a I<mailto:> prefix. A scalar if there ist just one email address, an array reference if there are more than one adresses (in this case C<has_multiple_emails> is set to I<1>
- 
+
 =item * B<has_multiple_emails>
 
 set to I<1> if there is more than one address in C<email>
@@ -105,6 +124,14 @@ The longitude of the place. Has the predicate function I<has_lon>.
 =item * B<lat>
 
 The latitude of the place. Has the predicate function I<has_>
+
+=item * B<status>
+
+I<OK> or I<Error>
+
+=item * B<error>
+
+error message, if C<$self->status> is I<Error>
 
 =back
 
@@ -123,6 +150,10 @@ Peter Mayr <pmayr@cpan.org>
 =head1 REPOSITORY
 
 The source code is also on GitHub <https://github.com/hatorikibble/webservice-lobid-organisations>. Pull requests and bug reports welcome!
+
+=head1 VERSION
+
+0.005
 
 =head1 LICENCE AND COPYRIGHT
 
@@ -178,7 +209,7 @@ sub BUILD {
                              $self->api_url, "organisations", $self->isil );
 
     $self->log->infof( "URL: %s", $query_string );
-    $response = HTTP::Tiny->new->get($query_string);
+    $response = HTTP::Tiny->new(timeout => $self->api_timeout)->get($query_string);
 
     if ( $response->{success} ) {
         $json_result = $response->{content};
@@ -187,16 +218,17 @@ sub BUILD {
 
         if ( $response->{status} eq '404' ) {
             $self->log->warnf( "ISIL %s not found!", $self->isil );
+            $self->status('OK');
             $self->found("false");
             return;
         }
         else {
             $self->log->errorf( "Problem accessing the API: %s!",
                                 $response->{status} );
-            $result_ref->{success}   = 0;
-            $result_ref->{error_msg} = $response->{status};
-
-            return $result_ref;
+            $self->status("Error");
+            $self->error(sprintf("Problem accessing the API: %s!",
+                                $response->{status}));
+            return;
         }
     }
 
@@ -208,11 +240,17 @@ sub BUILD {
     catch {
         $self->log->errorf( "Decoding of response '%s' failed: %s",
                             $json_result, $_ );
+        $self->status("Error");
+        $self->error(sprintf("Decoding of response '%s' failed: %s",
+                             $json_result, $_)
+                    );
+        return;
     };
 
     if ( $result_ref->{isil} eq $self->isil ) {
         $self->log->infof( "Got result for ISIL %s", $self->isil );
         $self->found("true");
+        $self->status("OK");
     }
 
     if ( $result_ref->{email} ) {

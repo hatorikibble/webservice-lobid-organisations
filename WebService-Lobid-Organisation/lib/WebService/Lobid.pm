@@ -1,5 +1,7 @@
 package WebService::Lobid;
 
+our $VERSION = 0.005;
+
 use strict;
 use warnings;
 
@@ -8,7 +10,11 @@ use Moo;
 
 has api_url => ( is => 'rw', default=> 'https://lobid.org/');
 has api_status => (is => 'rw');
+has api_timeout => (is => 'rw', default => 3);
 has use_ssl => ( is => 'rw' );
+
+has status => ( is => 'rw');
+has error  => ( is => 'rw');
 
 sub BUILD {
     my $self     = shift;
@@ -24,13 +30,13 @@ sub BUILD {
         $self->use_ssl("false");
     }
 
-    $response = HTTP::Tiny->new->get( $self->api_url );
+    $response = HTTP::Tiny->new(timeout => $self->api_timeout)->get( $self->api_url );
 
     if ( $response->{success} ) {
-        $self->api_status("ok");
+        $self->api_status("OK");
     }
     else {
-        $self->api_status("error");
+        $self->api_status("Error");
         warn sprintf( "API URL %s is not reachable: %s (%s)",
                       $self->api_url, $response->{reason},
                       $response->{status} );
