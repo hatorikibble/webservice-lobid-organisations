@@ -9,42 +9,58 @@ WebService::Lobid::Organisation - interface to the lobid-Organisations API
 # SYNOPSIS
 
     my $Library = WebService::Lobid::Organisation->new(isil=> 'DE-380');
-    
-    printf("This Library is called '%s', its homepage is at '%s' 
-            and it can be found at %f/%f",
-        $Library->name, $Library->url, $Library->lat, $Library->long);
-    
-    if ($Library->has_wikipedia){
-     printf("%s has its own wikipedia entry: %s",
-        $Library->name, $Library->wikipedia);
-    } 
-    
-    if ($Library->has_multiple_emails){
-     print $Library->email->[0];
+
+    if ($Library->status eq 'OK'){
+     printf("This Library is called '%s', its homepage is at '%s'
+             and it can be found at %f/%f",
+             $Library->name, $Library->url, $Library->lat, $Library->long
+             );
+
+     if ($Library->has_wikipedia){
+       printf("%s has its own wikipedia entry: %s",
+         $Library->name, $Library->wikipedia);
+       }
+
+     if ($Library->has_multiple_emails){
+       print $Library->email->[0];
+     }else{
+       print $Library->email;
+     }
     }else{
-     print $Library->email;
+       print $Library->error;
+    }
 
 # METHODS
 
 - new(isil=>$isil)
 
-    tries to fetch data for the organisation identified by the ISIL `$isil`. If an entry is found then the attribute `found` is set to _true_ 
+    tries to fetch data for the organisation identified by the ISIL `$isil`.
+    If an entry is found then the attribute `found` is set to _true_
+
+    If an error occurs, the attribute `status` is set to _Error_ with the error
+    message in `$self-`error>. Otherwise `status` is _OK_.
 
 # ATTRIBUTES
 
 currently the following attributes are supported
 
-- **api\_url** 
+- **api\_url**
 
-    inherited from [WebService::Lobid](https://metacpan.org/pod/WebService::Lobid), default is _https://lobid.org/_
+    inherited from [WebService::Lobid](https://metacpan.org/pod/WebService%3A%3ALobid), default is _https://lobid.org/_
 
 - **api\_status**
 
-    inherited from [WebService::Lobid](https://metacpan.org/pod/WebService::Lobid), _ok_ if `api_url` reachable, otherwise `error`
+    inherited from [WebService::Lobid](https://metacpan.org/pod/WebService%3A%3ALobid), _OK_ if `api_url` reachable,
+    otherwise `Error`
+
+- **api\_timeout**
+
+    inherited from [WebService::Lobid](https://metacpan.org/pod/WebService%3A%3ALobid), default ist _3_ seconds
 
 - **use\_ssl**
 
-    inherited from [WebService::Lobid](https://metacpan.org/pod/WebService::Lobid), _true_ if [HTTP::Tiny](https://metacpan.org/pod/HTTP::Tiny) can use SSL, otherwise `false`
+    inherited from [WebService::Lobid](https://metacpan.org/pod/WebService%3A%3ALobid), _true_ if [HTTP::Tiny](https://metacpan.org/pod/HTTP%3A%3ATiny) can use SSL,
+    otherwise `false`
 
 - **found** (true|false)
 
@@ -98,13 +114,21 @@ currently the following attributes are supported
 
     The latitude of the place. Has the predicate function _has\__
 
+- **status**
+
+    _OK_ or _Error_
+
+- **error**
+
+    error message, if `$self-`status> is _Error_
+
 # DEPENDENCIES
 
-[HTTP::Tiny](https://metacpan.org/pod/HTTP::Tiny), [JSON](https://metacpan.org/pod/JSON), [Log::Any](https://metacpan.org/pod/Log::Any), [Moo](https://metacpan.org/pod/Moo), [Try::Tiny](https://metacpan.org/pod/Try::Tiny)
+[HTTP::Tiny](https://metacpan.org/pod/HTTP%3A%3ATiny), [JSON](https://metacpan.org/pod/JSON), [Log::Any](https://metacpan.org/pod/Log%3A%3AAny), [Moo](https://metacpan.org/pod/Moo), [Try::Tiny](https://metacpan.org/pod/Try%3A%3ATiny)
 
 # LOGGING
 
-This module uses the [Log::Any](https://metacpan.org/pod/Log::Any) Framework
+This module uses the [Log::Any](https://metacpan.org/pod/Log%3A%3AAny) Framework
 
 # AUTHOR
 
@@ -113,6 +137,10 @@ Peter Mayr <pmayr@cpan.org>
 # REPOSITORY
 
 The source code is also on GitHub &lt;https://github.com/hatorikibble/webservice-lobid-organisations>. Pull requests and bug reports welcome!
+
+# VERSION
+
+0.005
 
 # LICENCE AND COPYRIGHT
 
