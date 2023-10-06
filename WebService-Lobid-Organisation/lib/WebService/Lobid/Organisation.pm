@@ -4,7 +4,6 @@ our $VERSION = 0.005;
 
 # ABSTRACT: interface to the lobid-Organisations API
 
-=for html <a href="https://travis-ci.org/hatorikibble/webservice-lobid-organisations"><img src="https://travis-ci.org/hatorikibble/webservice-lobid-organisations.svg?branch=master"></a>
 
 =head1 NAME
 
@@ -12,33 +11,33 @@ WebService::Lobid::Organisation - interface to the lobid-Organisations API
 
 =head1 SYNOPSIS
 
- my $Library = WebService::Lobid::Organisation->new(isil=> 'DE-380');
+ use WebService::Lobid::Organisation;
 
- if ($Library->status eq 'OK'){
-  printf("This Library is called '%s', its homepage is at '%s'
-          and it can be found at %f/%f",
-          $Library->name, $Library->url, $Library->lat, $Library->long
-          );
+ my $Library = WebService::Lobid::Organisation->new( isil => 'DE-380' );
 
-  if ($Library->has_wikipedia){
-    printf("%s has its own wikipedia entry: %s",
-      $Library->name, $Library->wikipedia);
-    }
+ if ( $Library->status eq 'OK' ) {
+     printf(
+         "This Library is called '%s', its homepage is at '%s'
+           and it can be found at %f/%f",
+         $Library->name, $Library->url, $Library->lat, $Library->lon
+     );
 
-  if ($Library->has_multiple_emails){
-    print $Library->email->[0];
-  }else{
-    print $Library->email;
-  }
- }else{
-    print $Library->error;
+     if ( $Library->has_multiple_emails ) {
+         print $Library->email->[0];
+     }
+     else {
+         print $Library->email;
+     }
+ }
+ else {
+     print $Library->error;
  }
 
 =head1 METHODS
 
 =over 4
 
-=item new(isil=>$isil)
+=item new( isil => $isil)
 
 tries to fetch data for the organisation identified by the ISIL C<$isil>.
 If an entry is found then the attribute C<found> is set to I<true>
